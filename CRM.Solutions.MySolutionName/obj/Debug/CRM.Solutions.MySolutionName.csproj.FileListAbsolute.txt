@@ -1,0 +1,8 @@
+C:\T\externalrepos\OctopusDeploy\IsIT.CRM.Solutions.ArionBaseline\bin\Debug\IsIT.CRM.Solutions.ArionBaseline.dll
+C:\T\externalrepos\OctopusDeploy\IsIT.CRM.Solutions.ArionBaseline\bin\Debug\IsIT.CRM.Solutions.ArionBaseline.pdb
+C:\T\externalrepos\OctopusDeploy\IsIT.CRM.Solutions.ArionBaseline\bin\Debug\Microsoft.IdentityModel.dll
+C:\T\externalrepos\OctopusDeploy\IsIT.CRM.Solutions.ArionBaseline\obj\Debug\CRM.Solutions.MySolutionName.csprojResolveAssemblyReference.cache
+C:\T\externalrepos\OctopusDeploy\IsIT.CRM.Solutions.ArionBaseline\obj\Debug\CRM.Solutions.MySolutionName.csproj.CoreCompileInputs.cache
+C:\T\externalrepos\OctopusDeploy\IsIT.CRM.Solutions.ArionBaseline\obj\Debug\IsIT.CRM.Solutions.ArionBaseline.dll
+C:\T\externalrepos\OctopusDeploy\IsIT.CRM.Solutions.ArionBaseline\obj\Debug\IsIT.CRM.Solutions.ArionBaseline.pdb
+C:\T\externalrepos\OctopusDeploy\IsIT.CRM.Solutions.ArionBaseline\bin\Debug\Microsoft.Crm.Sdk.Proxy.dll
