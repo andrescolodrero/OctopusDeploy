@@ -1,0 +1,75 @@
+{  
+  "Id": "ActionTemplates-81",
+  "Name": "Deploy Older SSIS project from a package",
+  "Description": "Deploys SSIS projects to SQL Server Integration Services - based on the previous method employeed in Arion",
+  "ActionType": "Octopus.TentaclePackage",
+  "Version": 20,
+  "Properties": {
+    "Octopus.Action.EnabledFeatures": "Octopus.Features.CustomScripts,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles",
+    "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles": "True",
+    "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings": "True",
+    "Octopus.Action.Package.DownloadOnTentacle": "False",
+    "Octopus.Action.Package.NuGetFeedId": "feeds-octopusdeploymentpackages",
+    "Octopus.Action.Package.NuGetPackageId": "#{SSIS_NugetPackageName}",
+    "Octopus.Action.CustomScripts.PostDeploy.ps1": "",
+    "Octopus.Action.Package.AdditionalXmlConfigurationTransforms": "",
+    "Octopus.Action.Package.JsonConfigurationVariablesEnabled": "True",
+    "Octopus.Action.SubstituteInFiles.Enabled": "True",
+    "Octopus.Action.SubstituteInFiles.TargetFiles": "*.config;*.bat;*.sql",
+    "Octopus.Action.CustomScripts.PreDeploy.ps1": "",
+    "Octopus.Action.CustomScripts.Deploy.ps1": "SCRIPTGOESHERE"
+  },
+  "Parameters": [
+    {
+      "Name": "SSIS_NugetPackageName",
+      "Label": "Package to deploy",
+      "HelpText": "The ID of the NuGet package you want to deploy.",
+      "DefaultValue": null,
+      "DisplaySettings": {
+        "Octopus.ControlType": "SingleLineText"
+      }
+    },
+    {
+      "Name": "SSIS_ServerName",
+      "Label": "SQL Integration Service Server name (\\instance)",
+      "HelpText": "Name of the SSIS Server you are deploying to.",
+      "DefaultValue": null,
+      "DisplaySettings": {
+        "Octopus.ControlType": "SingleLineText"
+      }
+    },
+    {
+      "Name": "SSIS_ParentFolder",
+      "Label": "Parent Folder",
+      "HelpText": "Name of the parent folder to create in Integration Services Catalogs on SSIS Server.",
+      "DefaultValue": "SSIS Solutions",
+      "DisplaySettings": {
+        "Octopus.ControlType": "SingleLineText"
+      }
+    },
+    {
+      "Name": "SSIS_FolderName",
+      "Label": "Folder name",
+      "HelpText": "Name of the folder to use within the Integration Services Catalog",
+      "DefaultValue": null,
+      "DisplaySettings": {
+        "Octopus.ControlType": "SingleLineText"
+      }
+    },
+    {
+      "Name": "SSIS_ProjectName",
+      "Label": "Project name",
+      "HelpText": "Name of the project within the folder of the Integration Services catalog",
+      "DefaultValue": null,
+      "DisplaySettings": {
+        "Octopus.ControlType": "SingleLineText"
+      }
+    }
+  ],
+  "LastModifiedBy": "kristinn",
+  "$Meta": {
+    "ExportedAt": "2016-10-17T19:59:22.607Z",
+    "OctopusVersion": "3.3.11",
+    "Type": "ActionTemplate"
+  }
+}

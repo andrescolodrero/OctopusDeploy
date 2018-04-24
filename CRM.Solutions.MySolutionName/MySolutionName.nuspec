@@ -1,0 +1,40 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <!-- The identifier that must be unique within the hosting gallery -->
+    <id>CRM.Solutions.ArionBaseline</id>
+
+    <!-- The package version number that is used when resolving dependencies -->
+    <version>$version$</version>
+
+    <!-- Authors contain text that appears directly on the gallery -->
+    <authors>Andres Colodrero</authors>
+
+    <!-- Owners are typically nuget.org identities that allow gallery
+            users to easily find other packages by the same owners.  -->
+    <owners>Arion bank</owners>
+
+    <!-- License and project URLs provide links for the gallery -->
+    <licenseUrl>http://www.arionbanki.is</licenseUrl>
+    <projectUrl>http://www.arionbanki.is</projectUrl>
+    <!-- If true, this value prompts the user to accept the license when
+            installing the package. -->
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+
+    <!-- Any details about this particular release -->
+    <releaseNotes>Package for Deploy CRM Solutions in Octopus. Arion Baseline Solution</releaseNotes>
+
+    <!-- The description can be used in package manager UI. Note that the
+            nuget.org gallery uses information you add in the portal. -->
+    <description>Package Solution files and deploy DLLs</description>
+    <!-- Copyright information -->
+    <copyright>Copyright ©2018 Arion</copyright>
+    <!-- Tags appear in the gallery and can be used for tag searches -->
+    <tags>CRM XRM Solutions</tags>
+  </metadata>
+  <!-- A readme.txt to display when the package is installed -->
+  <files>
+    <file src="..\packages\XrmCIFramework.9.0.0.16\tools\*.*" target="tools"/>
+    <file src="*.zip" />
+  </files>
+</package>
