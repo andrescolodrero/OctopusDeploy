@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
     "Id": "ActionTemplates-241",
     "Name": "Arion - Deploy CRM Solution from Package",
@@ -141,3 +142,148 @@
       "Type": "ActionTemplate"
     }
   }
+=======
+{
+    "Id": "ActionTemplates-241",
+    "Name": "Arion - Deploy CRM Solution from Package",
+    "Description": "Deploy CRM Solutions",
+    "ActionType": "Octopus.TentaclePackage",
+    "Version": 31,
+    "CommunityActionTemplateId": null,
+    "Properties": {
+      "Octopus.Action.EnabledFeatures": "Octopus.Features.CustomScripts,Octopus.Features.JsonConfigurationVariables,Octopus.Features.ConfigurationVariables,Octopus.Features.ConfigurationTransforms,Octopus.Features.SubstituteInFiles",
+      "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles": "False",
+      "Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings": "False",
+      "Octopus.Action.Package.DownloadOnTentacle": "False",
+      "Octopus.Action.Package.FeedId": "feeds-octopusdeploymentpackages",
+      "Octopus.Action.Package.PackageId": "#{CRM_NugetPackageName}",
+      "Octopus.Action.Package.JsonConfigurationVariablesEnabled": "True",
+      "Octopus.Action.SubstituteInFiles.Enabled": "True",
+      "Octopus.Action.CustomScripts.Deploy.ps1": "Function Format-OctopusArgument\r\n{\r\n\r\n    Param(\r\n        [string]$Value\r\n    )\r\n\r\n    $Value = $Value.Trim()\r\n\r\n    # There must be a better way to do this\r\n    Switch -Wildcard ($Value)\r\n    {\r\n\r\n        \"True\"\r\n        { Return $True\r\n        }\r\n        \"False\"\r\n        { Return $False\r\n        }\r\n        \"#{*}\"\r\n        { Return $null\r\n        }\r\n        Default\r\n        { Return $Value\r\n        }\r\n    }\r\n}\r\n\r\nfunction Deploy-CRMSolution\r\n{\r\n    Param ($CrmConnectionString, $SolutionFile, $Override, $PublishWorkflows, $SkipProductUpdateDependencies, $OverwriteUnmanagedCustomizations, $AsyncWaitTimeout, $Timeout, $ConvertToManaged )\r\n\r\n    $solutionInfo = Get-XrmSolutionInfoFromZip -SolutionFilePath $SolutionFile\r\n    write-host \"Getting solution info from zip: $SolutionFile\"\r\n\r\n    $solutionInfo = Get-XrmSolutionInfoFromZip -SolutionFilePath \"$SolutionFile\"\r\n    Write-Host \"Solution Name: \" $solutionInfo.UniqueName\r\n    Write-Host \"Solution Version: \" $solutionInfo.Version\r\n\r\n    #Get Solution from New Organization and check if exists.\r\n    $solution = Get-XrmSolution -ConnectionString \"$CrmConnectionString\" -UniqueSolutionName $solutionInfo.UniqueName\r\n\r\n    if ($solution -eq $null)\r\n    {\r\n        Write-Host \"Solution not currently installed\"\r\n    }\r\n    else\r\n    {\r\n        Write-Host \"Solution Installed Current version: \" $solution.Version\r\n    }\r\n\r\n    #We always import solutions, right?\r\n\r\n    if ($override -or ($solution -eq $null) -or ($solution.Version -ne $solutionInfo.Version))\r\n    {\r\n        write-host \"Importing Solution: $solutionFile\"\r\n        write-host \"Getting solution info from zip\"\r\n\r\n        $ImportJobId = [guid]::NewGuid()\r\n\r\n        $HoldingSolution = $false\r\n        $SkipProductUpdateDependencies = $false\r\n\r\n        $logsDirectory = \"C:\\T\\testdeploy\"\r\n        $logFilename = \"logimport\"\r\n\r\n        $propsCommand = @{'ConnectionString' = $CrmConnectionString;\r\n            'SolutionFilePath' = $SolutionFile;\r\n            'PublishWorkflows' = $PublishWorkflows;\r\n            'OverwriteUnmanagedCustomizations' = $overwriteUnmanagedCustomizations;\r\n            'SkipProductUpdateDependencies' = $SkipProductUpdateDependencies;\r\n            'ConvertToManaged' = $ConvertToManaged;\r\n            'HoldingSolution' = $HoldingSolution;\r\n            'ImportJobId' = $ImportJobId;\r\n            'AsyncWaitTimeout' = $AsyncWaitTimeout;\r\n            'ImportAsync' = $true;\r\n            'WaitForCompletion' = $true;\r\n            'Timeout' = $Timeout\r\n        }\r\n\r\n\r\n        Write-Host \"Deploying  Solution with Async Timeout $AsyncWaitTimeout seconds\"\r\n        $asyncOperationId = Import-XrmSolution @propsCommand -Verbose\r\n\r\n        Write-Host \"Solution Import Completed. Import Job Id: $importJobId\"\r\n\r\n        if ($logsDirectory)\r\n        {\r\n            if ($logFilename)\r\n            {\r\n                $importLogFile = $logsDirectory + \"\\\" + $logFilename\r\n            }\r\n            else\r\n            {\r\n                $importLogFile = $logsDirectory + \"\\\" + $solutionInfo.UniqueName + '_' + ($solutionInfo.Version).replace('.', '_') + '_' + [System.DateTime]::Now.ToString(\"yyyy_MM_dd__HH_mm\") + \".xml\"\r\n            }\r\n        }\r\n\r\n        $importJob = Get-XrmSolutionImportLog -ImportJobId $importJobId -ConnectionString \"$CrmConnectionString\" -OutputFile \"$importLogFile\"\r\n\r\n        $importProgress = $importJob.Progress\r\n        $importResult = (Select-Xml -Content $importJob.Data -XPath \"//solutionManifest/result/@result\").Node.Value\r\n        $importErrorText = (Select-Xml -Content $importJob.Data -XPath \"//solutionManifest/result/@errortext\").Node.Value\r\n\r\n        write-host \"Import Progress: $importProgress\"\r\n        write-host \"Import Result: $importResult\"\r\n        write-host \"Import Error Text: $importErrorText\"\r\n        write-host $importJob.Data\r\n\r\n        if ($importResult -ne \"success\")\r\n        {\r\n            throw \"Import Failed\"\r\n        }\r\n\r\n        #parse the importexportxml and look for result notes with result=\"failure\"\r\n        $importFailed = $false\r\n        $importjobXml = [xml]$importJob.Data\r\n        $failureNodes = $importjobXml.SelectNodes(\"//*[@result='failure']\")\r\n\r\n        foreach ($failureNode in $failureNodes)\r\n        {\r\n            $componentName = $failureNode.ParentNode.Attributes['name'].Value\r\n            $errorText = $failureNode.Attributes['errortext'].Value\r\n            Write-Host \"Component Import Failure: '$componentName' failed with error: '$errorText'\"\r\n            $importFailed = $true\r\n        }\r\n\r\n        if ($importFailed -eq $true)\r\n        {\r\n            throw \"The Solution Import failed because one or more components with a result of 'failure' were found. For detals, check the Diagnostics for this build or the solution import log file in the logs subfolder of the Drop folder.\"\r\n        }\r\n        else\r\n        {\r\n            Write-Host \"The import result of all components is 'success'.\"\r\n        }\r\n        #end parse the importexportxml and look for result notes with result=\"failure\"\r\n\r\n        $solution = Get-XrmSolution -ConnectionString \"$CrmConnectionString\" -UniqueSolutionName $solutionInfo.UniqueName\r\n\r\n        if ($solution.Version -ne $solutionInfo.Version)\r\n        {\r\n            write-error \"Import Failed. Check the solution import log file in the logs subfolder of the Drop folder.\"\r\n        }\r\n        else\r\n        {\r\n            Write-Host \"Solution Imported Successfully\"\r\n        }\r\n    }\r\n    else\r\n    {\r\n        Write-Host \"Skipped Import of Solution...\"\r\n    }\r\n\r\n}\r\n\r\n#Get XRM Toolkit from Package\r\n$DeployedPath = $OctopusParameters[\"Octopus.Action[$NugetPackageStepName].Output.Package.InstallationDirectoryPath\"]\r\n$xrmCIToolkit = Get-ChildItem -Recurse -Path $DeployedPath | Where {$_.Name -eq \"Xrm.Framework.CI.PowerShell.Cmdlets.dll\"}\r\nwrite-host \"Toolkit is here $xrmCIToolkit\"\r\nimport-module $xrmCIToolkit.Fullname -Verbose\r\n\r\n#Get Solution File\r\nwrite-host \"File deployed to $DeployedPath\"\r\n\r\n\r\n\r\n#Get OctopusVariables\r\n$CrmConnectionString = Format-OctopusArgument -Value $OctopusParameters[\"CRM_ConnectionString\"]\r\n$CrmSolutionName = Format-OctopusArgument -Value $OctopusParameters[\"CRM_SolutionName\"]\r\n$Override = Format-OctopusArgument -Value $OctopusParameters[\"CRM_OverrideSolution\"]\r\n$PublishWorkflows = Format-OctopusArgument -Value $OctopusParameters[\"CRM_PublishWorkflows\"]\r\n$OverwriteUnmanagedCustomizations = Format-OctopusArgument -Value $OctopusParameters[\"CRM_OverwriteUnmanagedCustomizations\"]\r\n$AsyncWaitTimeout = Format-OctopusArgument -Value $OctopusParameters[\"CRM_AsyncWaitTimeout\"]\r\n$Timeout = Format-OctopusArgument -Value $OctopusParameters[\"CRM_Timeout\"]\r\n$SolutionPackage = Format-OctopusArgument -Value $OctopusParameters[\"CRM_NugetPackageName\"]\r\n$SkipProductUpdateDependencies = Format-OctopusArgument -Value $OctopusParameters[\"CRM_SkipProductUpdateDependencies\"]\r\n$ConvertToManaged = Format-OctopusArgument -Value $OctopusParameters[\"CRM_ConvertToManaged\"]\r\n\r\ntry {\r\n    $SolutionFile = Get-ChildItem -Recurse -Path $DeployedPath | Where {$_.Name -Match $CrmSolutionName -and $_.Extension -match \"zip\"}\r\n    write-host \"Find $SolutionFile with name $SolutionFile.FullName\"\r\n} catch {\r\n    write-error \"Error Finding Solution File $SolutionPackage\"\r\n}\r\n#TODO: try, ctach, logs, etc\r\n\r\nwrite-host \"solutionFile = $SolutionFile\"\r\nwrite-host \"crmConnectionString = $CrmConnectionString\"\r\nwrite-host \"override = $Override\"\r\nwrite-host \"publishWorkflows = $PublishWorkflows\"\r\nwrite-host \"overwriteUnmanagedCustomizations = $OverwriteUnmanagedCustomizations\"\r\nwrite-host \"skipProductUpdateDependencies = $SkipProductUpdateDependencies\"\r\nwrite-host \"AsyncWaitTimeout = $AsyncWaitTimeout\"\r\nwrite-host \"Timeout = $Timeout\"\r\n\r\n#get info of teh solution\r\n\r\n$deployCommand = @{'CrmConnectionString' = $CrmConnectionString;\r\n    'SolutionFile' = $SolutionFile.FullName;\r\n    'Override' = $Override\r\n    'PublishWorkflows' = $PublishWorkflows;\r\n    'SkipProductUpdateDependencies' = $SkipProductUpdateDependencies;\r\n    'AsyncWaitTimeout' = $AsyncWaitTimeout;\r\n    'OverwriteUnmanagedCustomizations' = $OverwriteUnmanagedCustomizations;\r\n    'Timeout' = $Timeout;\r\n    'ConvertToManaged' = $ConvertToManaged \r\n}\r\n\r\nDeploy-CRMSolution @deployCommand\r\n\r\n\r\nwrite-host 'Leaving ImportSolution'",
+      "Octopus.Action.CustomScripts.PreDeploy.ps1": "",
+      "Octopus.Action.CustomScripts.PostDeploy.ps1": ""
+    },
+    "Parameters": [
+      {
+        "Id": "a613b6ba-6c54-4bf4-b4fe-f07395eaaa3f",
+        "Name": "CRM_NugetPackageName",
+        "Label": "CRM_NugetPackageName",
+        "HelpText": null,
+        "DefaultValue": "",
+        "DisplaySettings": {
+          "Octopus.ControlType": "SingleLineText"
+        },
+        "Links": {}
+      },
+      {
+        "Id": "ef9fde0a-c36d-4889-b79a-453bc49ef8f2",
+        "Name": "CRM_ConnectionString",
+        "Label": "CRM Connection String",
+        "HelpText": "Full connection string for XRM CI.\nExample:\n\"AuthType=AD;Url=http://crm-dev.arionbanki.is/king-gizzard",
+        "DefaultValue": "",
+        "DisplaySettings": {
+          "Octopus.ControlType": "SingleLineText"
+        },
+        "Links": {}
+      },
+      {
+        "Id": "f4602cd5-6b7f-4ea4-ab34-e53bfbe29f0d",
+        "Name": "CRM_OverrideSolution",
+        "Label": "Override Solution",
+        "HelpText": "Boolean: Override solution in deploy",
+        "DefaultValue": "True",
+        "DisplaySettings": {
+          "Octopus.ControlType": "Select",
+          "Octopus.SelectOptions": "True\nFalse"
+        },
+        "Links": {}
+      },
+      {
+        "Id": "a8cc5e34-ead5-4412-9f14-4e586062fa4e",
+        "Name": "CRM_PublishWorkflows",
+        "Label": "PublishWorkflows",
+        "HelpText": "Boolean: Publish workflows",
+        "DefaultValue": "True",
+        "DisplaySettings": {
+          "Octopus.ControlType": "Select",
+          "Octopus.SelectOptions": "True\nFalse"
+        },
+        "Links": {}
+      },
+      {
+        "Id": "06be54ef-2ed0-4545-9a42-f1e281adfe1e",
+        "Name": "CRM_OverwriteUnmanagedCustomizations",
+        "Label": "Over write Unmanaged Customizations",
+        "HelpText": "Boolean, Optional",
+        "DefaultValue": "False",
+        "DisplaySettings": {
+          "Octopus.ControlType": "Select",
+          "Octopus.SelectOptions": "True\nFalse"
+        },
+        "Links": {}
+      },
+      {
+        "Id": "be57fae5-28d1-46c2-8e70-5939dde4251d",
+        "Name": "CRM_SkipProductUpdateDependencies",
+        "Label": "Skip Product Update Dependencies",
+        "HelpText": "Boolean",
+        "DefaultValue": "False",
+        "DisplaySettings": {
+          "Octopus.ControlType": "Select",
+          "Octopus.SelectOptions": "True\nFalse"
+        },
+        "Links": {}
+      },
+      {
+        "Id": "9b9b22fe-9bfa-4741-9161-f2b9d0feda9d",
+        "Name": "CRM_AsyncWaitTimeout",
+        "Label": "Async Wait TimeOut",
+        "HelpText": "Async Wait in Seconds",
+        "DefaultValue": "60",
+        "DisplaySettings": {
+          "Octopus.ControlType": "SingleLineText"
+        },
+        "Links": {}
+      },
+      {
+        "Id": "274c43df-111e-4ee7-ad5d-4978ad083c2b",
+        "Name": "CRM_Timeout",
+        "Label": "Time Out",
+        "HelpText": "Time out to connect tO CRM Organization",
+        "DefaultValue": "30",
+        "DisplaySettings": {
+          "Octopus.ControlType": "SingleLineText"
+        },
+        "Links": {}
+      },
+      {
+        "Id": "62639cee-e01c-47fa-8587-c6294f275aa8",
+        "Name": "CRM_SolutionName",
+        "Label": "Solution Name",
+        "HelpText": "CRM Solution Name",
+        "DefaultValue": "",
+        "DisplaySettings": {
+          "Octopus.ControlType": "SingleLineText"
+        },
+        "Links": {}
+      },
+      {
+        "Id": "8425f659-1a22-4b90-8c25-138bd517365a",
+        "Name": "CRM_ConvertToManaged",
+        "Label": "Convert Solution to Managed",
+        "HelpText": "Import unmanaged solution and convert to Managed",
+        "DefaultValue": "True",
+        "DisplaySettings": {
+          "Octopus.ControlType": "Select",
+          "Octopus.SelectOptions": "True\nFalse"
+        },
+        "Links": {}
+      }
+    ],
+    "$Meta": {
+      "ExportedAt": "2018-04-24T15:59:18.713Z",
+      "OctopusVersion": "3.14.15",
+      "Type": "ActionTemplate"
+    }
+  }
+>>>>>>> 2463245ef90ff9dd95e80280d5e7fced782affb9
