@@ -61,8 +61,9 @@ function Deploy-CRMSolution
         $HoldingSolution = $false
         $SkipProductUpdateDependencies = $false
 
-        $logsDirectory = "C:\T\testdeploy"
-        $logFilename = "logimport"
+        #TODO: Check if possible to send a report with the ouput after import
+        #$logsDirectory = "C:\T\testdeploy"
+        #$logFilename = "logimport"
 
         $propsCommand = @{'ConnectionString' = $CrmConnectionString;
             'SolutionFilePath' = $SolutionFile;
@@ -96,7 +97,7 @@ function Deploy-CRMSolution
             }
         }
 
-        $importJob = Get-XrmSolutionImportLog -ImportJobId $importJobId -ConnectionString "$CrmConnectionString" -OutputFile "$importLogFile"
+        $importJob = Get-XrmSolutionImportLog -ImportJobId $importJobId -ConnectionString "$CrmConnectionString"
 
         $importProgress = $importJob.Progress
         $importResult = (Select-Xml -Content $importJob.Data -XPath "//solutionManifest/result/@result").Node.Value
